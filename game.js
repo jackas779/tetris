@@ -21,6 +21,30 @@ canvas.style.border = '1px solid white'
 
 context.scale(BLOCK_SIZE, BLOCK_SIZE)
 
+const piece = {
+  block: [
+    [0, 1, 0],
+    [1, 1, 1]
+  ],
+  position: {
+    y,
+    x
+  }
+}
+
+function update () {
+  if (y !== 24) {
+    setTimeout(() => {
+      window.requestAnimationFrame(update)
+      draw()
+    }, 300)
+  }
+
+  // if (y === 3) {
+  //   collision(piece, x, y)
+  // }
+}
+
 function draw () {
   context.fillStyle = 'white'
   context.fillRect(0, 0, canvas.width, canvas.height)
@@ -28,27 +52,32 @@ function draw () {
   drawGrid(COLUMSN_BOARD, ROWS_BOARD)
 
   context.fillStyle = 'purple'
-
-  const piece = [
-    [0, 1, 0],
-    [1, 1, 1]
-  ]
-
   drawPiece(piece, x, y)
+  collision(piece, x, y)
+
   y = gravity(y)
-  console.log(y)
-  // window.requestAnimationFrame(draw)
 }
 
 function drawGrid (width, heigth) {
+  let condicional = true
   for (let y = 0; y < heigth; y++) {
     for (let x = 0; x < width; x++) {
-      drawBlockMatriz(x, y)
+      if (condicional) {
+        drawBlockMatriz(x, y, y)
+        condicional = false
+      } else {
+        drawBlockMatriz(x, y, x)
+      }
     }
+    condicional = true
   }
 }
 
-function drawBlockMatriz (x, y) {
+function drawBlockMatriz (x, y, id) {
+  context.font = '1px Arial' // Fuente y tamaño
+  context.fillStyle = 'green' // Color del texto
+  context.fillText(id, x, y + 1) // Texto, posición x, y
+
   context.strokeStyle = 'gray'
   context.lineWidth = 0.1
   context.strokeRect(x, y, 1, 1)
@@ -62,7 +91,7 @@ function drawBlockVisualization (x, y) {
 
 function drawPiece (piece, x, y) {
   const ejeX = x
-  piece.forEach(array => {
+  piece.block.forEach(array => {
     array.forEach(e => {
       if (e === 1) {
         context.fillRect(x + 0.1, y + 0.1, FILL, FILL)
@@ -72,19 +101,69 @@ function drawPiece (piece, x, y) {
     x = ejeX
     y++
   })
+  piece.position.y = y
 }
 
 function gravity (y) {
   if (y < ROWS_BOARD) {
+    // collision(y)
     y++
   } else {
     y = 2
   }
-  setTimeout(() => {
-    console.log(y)
-  }, 10000)
 
   return y
 }
 
-draw()
+function collision (piece, x, y) {
+  let globalY = y
+  let globalX = x
+  const length = piece.position.x + piece.block[0].length - 1
+
+  if (piece.position.y === (ROWS_BOARD)) {
+    console.log('llegamops al final bueno', piece.position.y)
+    board[y].forEach(column => {
+      if (column !== 1) {
+        piece.block.forEach(array => {
+          array.forEach(column => {
+            if (column === 1) {
+              if (globalX <= length && globalY <= piece.position.y) {
+                board[globalY][globalX] = 1
+                globalX++
+              }
+            }
+          })
+          globalY++
+          globalX = x
+        })
+      }
+      globalY = y
+    })
+  } else {
+    board[piece.position.y - 1].forEach(column => {
+      if (column === 1) {
+        piece.block.forEach(array => {
+          array.forEach(column => {
+            if (column === 1) {
+              console.log(globalX, length, globalY, piece.position.y)
+              if (globalX <= length && globalY <= piece.position.y) {
+                board[globalY][globalX] = 1
+                globalX++
+              }
+            }
+          })
+          globalY++
+          globalX = x
+        })
+      }
+    })
+  }
+}
+
+update()
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft') {
+    console.log('hello bitch')
+  }
+})
